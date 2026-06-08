@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ChurnShield AI{% endblock %}
+{% block page_title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">ChurnShield AI / <span>Dashboard</span></div>
+
+<!-- Quick Metrics Strip -->
+<div class="metrics-row animate-in" style="margin-bottom:28px;">
+  {% set pills = [
+    ('Accuracy',  metadata.metrics.accuracy),
+    ('Precision', metadata.metrics.precision),
+    ('Recall',    metadata.metrics.recall),
+    ('F1-Score',  metadata.metrics.f1),
+    ('ROC-AUC',   metadata.metrics.roc_auc),
+  ] %}
+  {% for label, val in pills %}
+  <div class="metric-pill">
+    <div class="metric-pill-label">{{ label }}</div>
+    <div class="metric-pill-value">{{ "%.3f"|format(val) }}</div>
+    <div class="progress-bar" style="width:120px;">
+      <div class="progress-fill"
+           style="width:0%; background:{% if val>0.8 %}var(--teal){% elif val>0.7 %}var(--gold){% else %}var(--accent){% endif %};"
+           data-width="{{ (val*100)|round }}%"></div>
+    </div>
+  </div>
+  {% endfor %}
+  <div class="metric-pill">
+    <div class="metric-pill-label">Best Model</div>
+    <div class="metric-pill-value" style="font-size:14px; margin-top:4px; color:var(--teal);">
+      {{ metadata.best_model }}
+    </div>
+  </div>
+</div>
+
+<!-- EDA Overview -->
+{% if images.eda %}
+<div class="visual-card animate-in">
+  <div class="visual-card-header">
+    📊 Exploratory Data Analysis — Churn Patterns
+    <span class="section-tag" style="margin-left:auto; font-size:11px;">EDA</span>
+  </div>
+  <img src="data:image/png;base64,{{ images.eda }}" alt="EDA Overview"/>
+</div>
+{% endif %}
+
+<!-- Correlation Heatmap -->
+{% if images.heatmap %}
+<div class="visual-card animate-in">
+  <div class="visual-card-header">
+    🌡️ Feature Correlation Heatmap
+    <span class="section-tag" style="margin-left:auto; font-size:11px;">Correlations</span>
+  </div>
+  <img src="data:image/png;base64,{{ images.heatmap }}" alt="Correlation Heatmap"/>
+</div>
+{% endif %}
+
+<!-- Engineered Features -->
+{% if images.engineered %}
+<div class="visual-card animate-in">
+  <div class="visual-card-header">
+    🔧 Engineered Feature Distributions
+    <span class="section-tag" style="margin-left:auto; font-size:11px;">Feature Engineering</span>
+  </div>
+  <img src="data:image/png;base64,{{ images.engineered }}" alt="Engineered Features"/>
+</div>
+{% endif %}
+
+<!-- Model Comparison -->
+{% if images.comparison %}
+<div class="visual-card animate-in">
+  <div class="visual-card-header">
+    🤖 Model Performance Comparison & ROC Curves
+    <span class="section-tag" style="margin-left:auto; font-size:11px;">Model Evaluation</span>
+  </div>
+  <img src="data:image/png;base64,{{ images.comparison }}" alt="Model Comparison"/>
+</div>
+{% endif %}
+
+<!-- Best Model Evaluation -->
+{% if images.evaluation %}
+<div class="visual-card animate-in">
+  <div class="visual-card-header">
+    🏆 Best Model — Confusion Matrix & Metrics
+    <span class="section-tag" style="margin-left:auto; font-size:11px;">{{ metadata.best_model }}</span>
+  </div>
+  <img src="data:image/png;base64,{{ images.evaluation }}" alt="Best Model Evaluation"/>
+</div>
+{% endif %}
+
+<!-- Feature Importance -->
+{% if images.importance %}
+<div class="visual-card animate-in">
+  <div class="visual-card-header">
+    🔍 Feature Importance — Top Churn Drivers
+    <span class="section-tag" style="margin-left:auto; font-size:11px;">Explainability</span>
+  </div>
+  <img src="data:image/png;base64,{{ images.importance }}" alt="Feature Importance"/>
+</div>
+{% endif %}
+
+<!-- Business Intelligence Dashboard -->
+{% if images.business %}
+<div class="visual-card animate-in">
+  <div class="visual-card-header">
+    💼 Business Intelligence — Risk Segments & Revenue Impact
+    <span class="section-tag" style="margin-left:auto; font-size:11px;">BI Dashboard</span>
+  </div>
+  <img src="data:image/png;base64,{{ images.business }}" alt="Business Dashboard"/>
+</div>
+{% endif %}
+
+<!-- Model Comparison Table -->
+<div class="section-header" style="margin-top:8px;">
+  <div class="section-title">All Model Results</div>
+  <div class="section-tag">Ranked by ROC-AUC</div>
+</div>
+<div class="card" style="padding:0; overflow:hidden; margin-bottom:28px;">
+  <table class="model-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Model</th><th>Accuracy</th>
+        <th>Precision</th><th>Recall</th><th>F1-Score</th><th>ROC-AUC</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set sorted_models = metadata.all_models.items() | sort(attribute='1.roc_auc', reverse=True) %}
+      {% for name, m in sorted_models %}
+      <tr class="{{ 'best-row' if name == metadata.best_model else '' }}">
+        <td style="color:var(--text-muted);">{{ loop.index }}</td>
+        <td>{{ name }}</td>
+        <td>{{ "%.4f"|format(m.accuracy) }}</td>
+        <td>{{ "%.4f"|format(m.precision) }}</td>
+        <td>{{ "%.4f"|format(m.recall) }}</td>
+        <td>{{ "%.4f"|format(m.f1) }}</td>
+        <td style="color:var(--teal); font-weight:600;">{{ "%.4f"|format(m.roc_auc) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Key Business Insights -->
+<div class="section-header">
+  <div class="section-title">💡 Key Business Insights</div>
+</div>
+<div class="grid-3" style="margin-bottom:28px;">
+  <div class="card card-sm" style="border-color:rgba(233,69,96,0.3);">
+    <div class="stat-icon">🔴</div>
+    <div class="card-title">Highest Risk Factors</div>
+    <ul style="margin-top:10px; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:8px;">
+      {% for item in ['Month-to-month contracts (3× more churn)','Electronic check payment method','Fiber optic with no security add-ons','Tenure < 12 months (new customers)','High monthly charges without tech support'] %}
+      <li style="font-size:13px; color:var(--text-soft); display:flex; gap:8px; align-items:flex-start;">
+        <span style="color:var(--accent); flex-shrink:0;">▸</span> {{ item }}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="card card-sm" style="border-color:rgba(0,212,170,0.3);">
+    <div class="stat-icon">🟢</div>
+    <div class="card-title">Retention Success Factors</div>
+    <ul style="margin-top:10px; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:8px;">
+      {% for item in ['2-year contracts (lowest churn rate)','Auto-pay methods (bank/card transfer)','Bundled security + backup services','Tenure > 24 months (loyal base)','Having partner/dependents in account'] %}
+      <li style="font-size:13px; color:var(--text-soft); display:flex; gap:8px; align-items:flex-start;">
+        <span style="color:var(--teal); flex-shrink:0;">▸</span> {{ item }}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="card card-sm" style="border-color:rgba(245,166,35,0.3);">
+    <div class="stat-icon">💰</div>
+    <div class="card-title">Revenue Recommendations</div>
+    <ul style="margin-top:10px; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:8px;">
+      {% for item in ['Offer 20% discount to upgrade to annual plan','Proactively contact high-risk customers','Bundle tech support for fiber optic users','Launch referral program for 2-year customers','Introduce first-year loyalty perks program'] %}
+      <li style="font-size:13px; color:var(--text-soft); display:flex; gap:8px; align-items:flex-start;">
+        <span style="color:var(--gold); flex-shrink:0;">▸</span> {{ item }}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<!-- API Endpoint Info -->
+<div class="card card-sm animate-in" style="border-color:rgba(167,139,250,0.3);">
+  <div class="card-title" style="color:var(--lavender); margin-bottom:12px;">🔌 REST API Endpoint</div>
+  <div style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">
+    POST to <code style="background:var(--bg-card2); padding:2px 8px; border-radius:5px; color:var(--teal); font-family:var(--font-mono);">/api/quick_predict</code>
+    with JSON body to get churn prediction programmatically.
+  </div>
+  <pre style="background:var(--bg-card2); border:1px solid var(--border); border-radius:10px; padding:16px; font-family:var(--font-mono); font-size:12px; color:var(--text-soft); overflow-x:auto; line-height:1.6;">{
+  "tenure": 6,
+  "monthly_charges": 95,
+  "contract": "Month-to-month",
+  "internet_service": "Fiber optic",
+  "tech_support": "No",
+  "online_security": "No",
+  "payment_method": "Electronic check"
+}
+
+// Response:
+{
+  "churn": true,
+  "probability": 0.847,
+  "confidence": "84.7%",
+  "risk_segment": "High"
+}</pre>
+</div>
+{% endblock %}

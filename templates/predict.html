@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}Predict Churn — ChurnShield AI{% endblock %}
+{% block page_title %}Single Customer Prediction{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">ChurnShield AI / <span>Predict</span></div>
+
+{% if result %}
+<!-- ── Result Banner ──────────────────────────────────────────────────── -->
+<div class="result-card {{ 'result-churn' if result.prediction else 'result-retain' }} animate-in">
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:20px;">
+    <div>
+      <div class="result-label" style="color:{{ '#e94560' if result.prediction else '#00d4aa' }};">
+        Prediction Result
+      </div>
+      <div class="result-verdict" style="color:{{ '#e94560' if result.prediction else '#00d4aa' }};">
+        {{ result.label }}
+      </div>
+      <div class="result-conf">Confidence: {{ result.confidence }}</div>
+      <div style="margin-top:14px;">
+        <span class="risk-badge risk-{{ result.risk|lower }}">
+          {{ '🔴' if result.risk=='High' else ('🟡' if result.risk=='Medium' else '🟢') }}
+          {{ result.risk }} Risk
+        </span>
+      </div>
+    </div>
+    <div class="gauge-wrap">
+      <img src="data:image/png;base64,{{ result.gauge_img }}" alt="Churn probability gauge"/>
+    </div>
+  </div>
+</div>
+
+<!-- ── Retention Recommendations ─────────────────────────────────────── -->
+<div class="section-header">
+  <div class="section-title">💡 Retention Recommendations</div>
+  <div class="section-tag">{{ result.tips|length }} Actions</div>
+</div>
+<div class="tips-grid" style="margin-bottom:32px;">
+  {% for tip in result.tips %}
+  <div class="tip-card" style="animation-delay:{{ loop.index0 * 0.07 }}s;">
+    <div class="tip-icon">{{ tip.icon }}</div>
+    <div class="tip-title">{{ tip.title }}</div>
+    <div class="tip-desc">{{ tip.desc }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="divider"></div>
+<div style="margin-bottom:24px; display:flex; align-items:center; gap:12px;">
+  <div class="section-title" style="font-size:16px;">Try Another Prediction</div>
+  <a href="{{ url_for('predict') }}" class="btn btn-outline btn-sm">Reset Form</a>
+</div>
+{% endif %}
+
+<!-- ── Prediction Form ────────────────────────────────────────────────── -->
+<div class="card animate-in">
+  <div class="section-header" style="margin-bottom:24px;">
+    <div class="section-title" style="font-size:17px;">🔮 Customer Details</div>
+    <div class="section-tag">Fill all fields</div>
+  </div>
+
+  <form method="POST" action="{{ url_for('predict') }}">
+
+    <!-- Personal Info -->
+    <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+      👤 Personal Information
+    </div>
+    <div class="form-grid" style="margin-bottom:24px;">
+
+      <div class="form-group">
+        <label class="form-label">Gender</label>
+        <select name="gender" class="form-control">
+          <option value="Male"   {{ 'selected' if form_vals.get('gender')=='Male'   }}>Male</option>
+          <option value="Female" {{ 'selected' if form_vals.get('gender')=='Female' }}>Female</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Senior Citizen</label>
+        <select name="senior_citizen" class="form-control">
+          <option value="0" {{ 'selected' if form_vals.get('senior_citizen')=='0' }}>No</option>
+          <option value="1" {{ 'selected' if form_vals.get('senior_citizen')=='1' }}>Yes</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Partner</label>
+        <select name="partner" class="form-control">
+          <option value="No"  {{ 'selected' if form_vals.get('partner')=='No'  }}>No</option>
+          <option value="Yes" {{ 'selected' if form_vals.get('partner')=='Yes' }}>Yes</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Dependents</label>
+        <select name="dependents" class="form-control">
+          <option value="No"  {{ 'selected' if form_vals.get('dependents')=='No'  }}>No</option>
+          <option value="Yes" {{ 'selected' if form_vals.get('dependents')=='Yes' }}>Yes</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Account Info -->
+    <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+      📋 Account Information
+    </div>
+    <div class="form-grid" style="margin-bottom:24px;">
+
+      <div class="form-group">
+        <label class="form-label">Tenure (months)</label>
+        <input type="number" name="tenure" class="form-control" min="1" max="72"
+               value="{{ form_vals.get('tenure', '12') }}" placeholder="1–72"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Contract Type</label>
+        <select name="contract" class="form-control">
+          {% for c in ['Month-to-month','One year','Two year'] %}
+          <option value="{{ c }}" {{ 'selected' if form_vals.get('contract')==c }}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Paperless Billing</label>
+        <select name="paperless_billing" class="form-control">
+          <option value="Yes" {{ 'selected' if form_vals.get('paperless_billing')=='Yes' }}>Yes</option>
+          <option value="No"  {{ 'selected' if form_vals.get('paperless_billing')=='No'  }}>No</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Payment Method</label>
+        <select name="payment_method" class="form-control">
+          {% for p in ['Electronic check','Mailed check','Bank transfer (automatic)','Credit card (automatic)'] %}
+          <option value="{{ p }}" {{ 'selected' if form_vals.get('payment_method')==p }}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Charges -->
+    <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+      💰 Billing
+    </div>
+    <div class="form-grid" style="margin-bottom:24px;">
+      <div class="form-group">
+        <label class="form-label">Monthly Charges ($)</label>
+        <input type="number" name="monthly_charges" class="form-control" min="0" max="150" step="0.01"
+               value="{{ form_vals.get('monthly_charges', '65') }}" placeholder="e.g. 65.00"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total Charges ($) — optional</label>
+        <input type="number" name="total_charges" class="form-control" min="0" step="0.01"
+               value="{{ form_vals.get('total_charges', '') }}" placeholder="Auto-calculated if blank"/>
+      </div>
+    </div>
+
+    <!-- Services -->
+    <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+      📡 Services
+    </div>
+    <div class="form-grid" style="margin-bottom:28px;">
+
+      <div class="form-group">
+        <label class="form-label">Phone Service</label>
+        <select name="phone_service" class="form-control">
+          <option value="Yes" {{ 'selected' if form_vals.get('phone_service','Yes')=='Yes' }}>Yes</option>
+          <option value="No"  {{ 'selected' if form_vals.get('phone_service')=='No' }}>No</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Multiple Lines</label>
+        <select name="multiple_lines" class="form-control">
+          {% for v in ['No','Yes','No phone service'] %}
+          <option value="{{ v }}" {{ 'selected' if form_vals.get('multiple_lines')==v }}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Internet Service</label>
+        <select name="internet_service" class="form-control">
+          {% for v in ['Fiber optic','DSL','No'] %}
+          <option value="{{ v }}" {{ 'selected' if form_vals.get('internet_service')==v }}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Online Security</label>
+        <select name="online_security" class="form-control">
+          {% for v in ['No','Yes','No internet service'] %}
+          <option value="{{ v }}" {{ 'selected' if form_vals.get('online_security')==v }}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Online Backup</label>
+        <select name="online_backup" class="form-control">
+          {% for v in ['No','Yes','No internet service'] %}
+          <option value="{{ v }}" {{ 'selected' if form_vals.get('online_backup')==v }}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Device Protection</label>
+        <select name="device_protection" class="form-control">
+          {% for v in ['No','Yes','No internet service'] %}
+          <option value="{{ v }}" {{ 'selected' if form_vals.get('device_protection')==v }}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tech Support</label>
+        <select name="tech_support" class="form-control">
+          {% for v in ['No','Yes','No internet service'] %}
+          <option value="{{ v }}" {{ 'selected' if form_vals.get('tech_support')==v }}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Streaming TV</label>
+        <select name="streaming_tv" class="form-control">
+          {% for v in ['No','Yes','No internet service'] %}
+          <option value="{{ v }}" {{ 'selected' if form_vals.get('streaming_tv')==v }}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Streaming Movies</label>
+        <select name="streaming_movies" class="form-control">
+          {% for v in ['No','Yes','No internet service'] %}
+          <option value="{{ v }}" {{ 'selected' if form_vals.get('streaming_movies')==v }}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <button type="submit" class="btn btn-primary btn-lg">
+        🔮 Predict Churn
+      </button>
+      <a href="{{ url_for('predict') }}" class="btn btn-outline">↺ Reset</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

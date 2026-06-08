@@ -1,0 +1,89 @@
+{
+  "best_model": "Random Forest",
+  "metrics": {
+    "accuracy": 0.6884315117104329,
+    "precision": 0.5522727272727272,
+    "recall": 0.5010309278350515,
+    "f1": 0.5254054054054054,
+    "roc_auc": 0.7153300307939483
+  },
+  "all_models": {
+    "Logistic Regression": {
+      "accuracy": 0.6437189496096523,
+      "precision": 0.48759124087591244,
+      "recall": 0.688659793814433,
+      "f1": 0.5709401709401709,
+      "roc_auc": 0.7066564020172268
+    },
+    "Decision Tree": {
+      "accuracy": 0.6181689141234918,
+      "precision": 0.46074074074074073,
+      "recall": 0.6412371134020619,
+      "f1": 0.5362068965517242,
+      "roc_auc": 0.6554815459454636
+    },
+    "Random Forest": {
+      "accuracy": 0.6884315117104329,
+      "precision": 0.5522727272727272,
+      "recall": 0.5010309278350515,
+      "f1": 0.5254054054054054,
+      "roc_auc": 0.7153300307939483
+    },
+    "Gradient Boosting": {
+      "accuracy": 0.6635911994322214,
+      "precision": 0.5145118733509235,
+      "recall": 0.4020618556701031,
+      "f1": 0.4513888888888889,
+      "roc_auc": 0.6876177087517295
+    },
+    "XGBoost": {
+      "accuracy": 0.6721078779276083,
+      "precision": 0.5309973045822103,
+      "recall": 0.4061855670103093,
+      "f1": 0.4602803738317757,
+      "roc_auc": 0.685221136252064
+    },
+    "Voting Ensemble": {
+      "accuracy": 0.6792051100070973,
+      "precision": 0.5428571428571428,
+      "recall": 0.4309278350515464,
+      "f1": 0.4804597701149425,
+      "roc_auc": 0.7021711965010933
+    }
+  },
+  "dataset_shape": [
+    7043,
+    21
+  ],
+  "churn_rate": 0.34445548771830187,
+  "feature_count": 27,
+  "feature_names": [
+    "gender",
+    "SeniorCitizen",
+    "Partner",
+    "Dependents",
+    "tenure",
+    "PhoneService",
+    "MultipleLines",
+    "InternetService",
+    "OnlineSecurity",
+    "OnlineBackup",
+    "DeviceProtection",
+    "TechSupport",
+    "StreamingTV",
+    "StreamingMovies",
+    "Contract",
+    "PaperlessBilling",
+    "PaymentMethod",
+    "MonthlyCharges",
+    "TotalCharges",
+    "avg_monthly_spend",
+    "charge_per_service",
+    "tenure_group",
+    "is_long_term",
+    "num_services",
+    "engagement_score",
+    "high_spender",
+    "low_support_risk"
+  ]
+}

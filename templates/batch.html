@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Batch Prediction — ChurnShield AI{% endblock %}
+{% block page_title %}Batch CSV Prediction{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">ChurnShield AI / <span>Batch Upload</span></div>
+
+{% if error %}
+<div class="alert alert-danger">⚠️ {{ error }}</div>
+{% endif %}
+
+<!-- Upload Form -->
+<div class="card animate-in" style="margin-bottom:28px;">
+  <div class="section-header" style="margin-bottom:20px;">
+    <div class="section-title" style="font-size:17px;">📂 Upload Customer CSV</div>
+    <div class="section-tag">Bulk Scoring</div>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" action="{{ url_for('batch') }}">
+    <div id="uploadZone" class="upload-zone" style="margin-bottom:20px;">
+      <div class="upload-icon">📄</div>
+      <div class="upload-title">Drag & drop your CSV here</div>
+      <div class="upload-sub">or click to browse — accepts .csv files</div>
+      <div id="fileName" style="margin-top:14px;font-size:13px;color:var(--teal);font-family:var(--font-mono);min-height:20px;"></div>
+      <input type="file" id="csvInput" name="csv_file" accept=".csv"
+             style="display:none;" required/>
+    </div>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <button type="submit" class="btn btn-teal btn-lg">⚡ Run Batch Prediction</button>
+      <a href="{{ url_for('static', filename='sample_batch.csv') }}" class="btn btn-outline btn-sm"
+         style="font-size:12px;">⬇ Download Sample CSV</a>
+    </div>
+  </form>
+</div>
+
+<!-- Expected Format -->
+<div class="card card-sm animate-in" style="margin-bottom:28px;">
+  <div class="card-title" style="margin-bottom:14px;">📋 Expected CSV Column Format</div>
+  <div style="overflow-x:auto;">
+    <table class="model-table" style="font-size:12px; min-width:700px;">
+      <thead>
+        <tr>
+          {% for col in ['tenure','MonthlyCharges','TotalCharges','Contract','InternetService',
+                         'TechSupport','OnlineSecurity','PaymentMethod','gender','SeniorCitizen',
+                         'Partner','Dependents','PhoneService','MultipleLines','OnlineBackup',
+                         'DeviceProtection','StreamingTV','StreamingMovies','PaperlessBilling'] %}
+          <th>{{ col }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>24</td><td>79.90</td><td>1920.00</td>
+          <td>Month-to-month</td><td>Fiber optic</td>
+          <td>No</td><td>No</td><td>Electronic check</td>
+          <td>Male</td><td>0</td><td>Yes</td><td>No</td>
+          <td>Yes</td><td>No</td><td>No</td><td>Yes</td>
+          <td>Yes</td><td>No</td><td>Yes</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:12px; font-size:12px; color:var(--text-muted);">
+    ℹ️ Column names are case-sensitive. Missing columns will be filled with safe defaults.
+  </div>
+</div>
+
+{% if results_df %}
+<!-- Results Summary Chart -->
+{% if chart_img %}
+<div class="visual-card animate-in" style="margin-bottom:28px;">
+  <div class="visual-card-header">📊 Batch Prediction Summary</div>
+  <img src="data:image/png;base64,{{ chart_img }}" alt="Batch results chart"/>
+</div>
+{% endif %}
+
+<!-- Results Table -->
+<div class="section-header">
+  <div class="section-title">Prediction Results</div>
+  <div class="section-tag">Top 50 rows shown</div>
+</div>
+<div class="card" style="padding:0; overflow:hidden; overflow-x:auto;">
+  {{ results_df | safe }}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Create sample CSV download (inline, no server file needed)
+document.querySelector('a[href*="sample_batch"]')?.addEventListener('click', function(e) {
+  e.preventDefault();
+  const header = 'tenure,MonthlyCharges,TotalCharges,Contract,InternetService,TechSupport,OnlineSecurity,PaymentMethod,gender,SeniorCitizen,Partner,Dependents,PhoneService,MultipleLines,OnlineBackup,DeviceProtection,StreamingTV,StreamingMovies,PaperlessBilling';
+  const rows = [
+    '24,79.90,1920.00,Month-to-month,Fiber optic,No,No,Electronic check,Male,0,Yes,No,Yes,No,No,Yes,Yes,No,Yes',
+    '60,45.00,2700.00,Two year,DSL,Yes,Yes,Bank transfer (automatic),Female,0,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No',
+    '5,95.00,475.00,Month-to-month,Fiber optic,No,No,Electronic check,Male,1,No,No,Yes,Yes,No,No,Yes,Yes,Yes',
+    '36,55.00,1980.00,One year,DSL,Yes,No,Credit card (automatic),Female,0,No,No,Yes,No,Yes,No,No,No,Yes',
+    '2,105.00,210.00,Month-to-month,Fiber optic,No,No,Mailed check,Male,0,No,No,Yes,Yes,No,No,Yes,Yes,No',
+    '48,30.00,1440.00,Two year,No,No,No,Bank transfer (automatic),Female,0,Yes,Yes,No,No phone service,No,No,No,No,No',
+    '12,70.00,840.00,Month-to-month,Fiber optic,No,Yes,Electronic check,Male,0,No,No,Yes,Yes,No,No,Yes,No,Yes',
+    '72,20.00,1440.00,Two year,DSL,Yes,Yes,Credit card (automatic),Female,0,Yes,Yes,Yes,No,Yes,Yes,No,No,No',
+  ];
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sample_batch.csv';
+  a.click();
+});
+</script>
+{% endblock %}

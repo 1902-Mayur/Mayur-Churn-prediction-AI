@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}ChurnShield AI — Overview{% endblock %}
+{% block page_title %}System Overview{% endblock %}
+
+{% block content %}
+<!-- Hero Banner -->
+<div class="hero-banner animate-in">
+  <div class="hero-title">Customer Churn <span>Prediction</span> System</div>
+  <div class="hero-sub">
+    Advanced ML pipeline using Random Forest, XGBoost, and Gradient Boosting to identify
+    at-risk customers before they leave — helping businesses act proactively.
+  </div>
+  <div style="margin-top:24px; display:flex; gap:12px; flex-wrap:wrap;">
+    <a href="{{ url_for('predict') }}" class="btn btn-primary btn-lg">🔮 Predict Churn</a>
+    <a href="{{ url_for('batch') }}"   class="btn btn-outline">📂 Batch Upload</a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline">📊 View Dashboard</a>
+  </div>
+</div>
+
+<!-- Key Stats -->
+<div class="stat-grid">
+  <div class="stat-card" style="--accent-color: var(--accent);">
+    <div class="stat-icon">🧠</div>
+    <div class="stat-label">Best Model</div>
+    <div class="stat-number" style="font-size:20px;">{{ metadata.best_model }}</div>
+    <div class="stat-meta">Selected by ROC-AUC</div>
+  </div>
+  <div class="stat-card" style="--accent-color: var(--teal);">
+    <div class="stat-icon">🎯</div>
+    <div class="stat-label">ROC-AUC Score</div>
+    <div class="stat-number">
+      <span data-count="{{ (metadata.metrics.roc_auc * 100)|round(1) }}" data-suffix="%" data-decimals="1">0%</span>
+    </div>
+    <div class="stat-meta">Area under ROC curve</div>
+  </div>
+  <div class="stat-card" style="--accent-color: var(--gold);">
+    <div class="stat-icon">📊</div>
+    <div class="stat-label">Dataset Size</div>
+    <div class="stat-number">
+      <span data-count="{{ metadata.dataset_shape[0] }}">0</span>
+    </div>
+    <div class="stat-meta">Customer records</div>
+  </div>
+  <div class="stat-card" style="--accent-color: var(--lavender);">
+    <div class="stat-icon">🔬</div>
+    <div class="stat-label">Features Used</div>
+    <div class="stat-number">
+      <span data-count="{{ metadata.feature_count }}">0</span>
+    </div>
+    <div class="stat-meta">Incl. 8 engineered</div>
+  </div>
+  <div class="stat-card" style="--accent-color: var(--accent);">
+    <div class="stat-icon">📉</div>
+    <div class="stat-label">Churn Rate</div>
+    <div class="stat-number">
+      <span data-count="{{ (metadata.churn_rate * 100)|round(1) }}" data-suffix="%" data-decimals="1">0%</span>
+    </div>
+    <div class="stat-meta">In dataset</div>
+  </div>
+  <div class="stat-card" style="--accent-color: var(--blue);">
+    <div class="stat-icon">⚡</div>
+    <div class="stat-label">F1-Score</div>
+    <div class="stat-number">
+      <span data-count="{{ (metadata.metrics.f1 * 100)|round(1) }}" data-suffix="%" data-decimals="1">0%</span>
+    </div>
+    <div class="stat-meta">Precision-Recall balance</div>
+  </div>
+</div>
+
+<!-- Model Comparison Table -->
+<div class="section-header">
+  <div class="section-title">Model Performance Comparison</div>
+  <div class="section-tag">All Models</div>
+</div>
+<div class="card" style="margin-bottom:28px; padding:0; overflow:hidden;">
+  <table class="model-table">
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Accuracy</th>
+        <th>Precision</th>
+        <th>Recall</th>
+        <th>F1-Score</th>
+        <th>ROC-AUC</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for name, m in metadata.all_models.items() %}
+      <tr class="{{ 'best-row' if name == metadata.best_model else '' }}">
+        <td>{{ name }}</td>
+        <td>
+          <div class="score-bar-wrap">
+            <span>{{ "%.3f"|format(m.accuracy) }}</span>
+            <div class="score-bar-inner">
+              <div class="score-bar-fill" style="width:{{ (m.accuracy*100)|round }}%; background:var(--{% if name==metadata.best_model %}teal{% else %}text-muted{% endif %})"></div>
+            </div>
+          </div>
+        </td>
+        <td>{{ "%.3f"|format(m.precision) }}</td>
+        <td>{{ "%.3f"|format(m.recall) }}</td>
+        <td>{{ "%.3f"|format(m.f1) }}</td>
+        <td style="color:var(--{% if m.roc_auc > 0.72 %}teal{% elif m.roc_auc > 0.68 %}gold{% else %}text-muted{% endif %})">
+          {{ "%.3f"|format(m.roc_auc) }}</td>
+        <td>
+          {% if name == metadata.best_model %}
+            <span class="tag tag-green">★ Best</span>
+          {% else %}
+            <span class="tag" style="background:rgba(100,116,139,0.1); color:var(--text-muted); border:1px solid var(--border);">Trained</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Project Workflow -->
+<div class="section-header">
+  <div class="section-title">Project Workflow</div>
+  <div class="section-tag">11 Steps</div>
+</div>
+<div class="feature-list" style="margin-bottom:28px;">
+  {% set steps = [
+    ('📦','Data Collection','7,043 telecom customer records loaded with Pandas'),
+    ('🧹','Preprocessing','Missing values, encoding, type fixes, deduplication'),
+    ('🔧','Feature Engineering','8 new features: engagement score, risk flags, spend ratios'),
+    ('📈','EDA','7 visualization charts covering churn patterns and correlations'),
+    ('⚖️','SMOTE Balancing','Synthetic oversampling for imbalanced churn classes'),
+    ('🤖','Model Training','6 classifiers: LR, DT, RF, GB, XGBoost, VotingEnsemble'),
+    ('📐','Evaluation','Accuracy, Precision, Recall, F1, AUC, Confusion Matrix'),
+    ('🏆','Best Model','Auto-selected by ROC-AUC score'),
+    ('🔮','Prediction UI','Single customer prediction with risk score & confidence'),
+    ('📂','Batch Prediction','Upload CSV for bulk scoring and segment analysis'),
+    ('💡','Retention Tips','AI-generated retention strategy per customer profile'),
+  ] %}
+  {% for icon, title, desc in steps %}
+  <div class="feature-item">
+    <div class="feature-item-icon">{{ icon }}</div>
+    <div class="feature-item-text">
+      <strong>{{ title }}</strong>{{ desc }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Tech Stack -->
+<div class="section-header">
+  <div class="section-title">Tech Stack</div>
+</div>
+<div class="grid-3" style="margin-bottom:28px;">
+  <div class="card card-sm">
+    <div class="card-title">🐍 ML Libraries</div>
+    <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
+      {% for t in ['scikit-learn','XGBoost','imbalanced-learn','NumPy','Pandas'] %}
+      <span class="tag tag-gold">{{ t }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card card-sm">
+    <div class="card-title">📊 Visualization</div>
+    <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
+      {% for t in ['Matplotlib','Seaborn','Plotly'] %}
+      <span class="tag tag-green">{{ t }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card card-sm">
+    <div class="card-title">🌐 Web Framework</div>
+    <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
+      {% for t in ['Flask','Jinja2','HTML5','CSS3','JavaScript'] %}
+      <span class="tag" style="background:rgba(96,165,250,0.1);color:var(--blue);border:1px solid rgba(96,165,250,0.2);">{{ t }}</span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
